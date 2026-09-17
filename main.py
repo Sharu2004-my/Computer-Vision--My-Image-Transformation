@@ -1,110 +1,84 @@
-import cv2
-import numpy as np
-import os
+from image_utils import load_image, save_image
+from transformations import (
+    brightness,
+    contrast,
+    negative,
+    gamma_transformation,
+    thresholding,
+    translation,
+    scaling,
+    rotation,
+    horizontal_reflection,
+    vertical_reflection,
+    x_shearing,
+    y_shearing,
+    affine_transformation
+)
 
-# Read input image
-image = cv2.imread("input.jpg")
 
-if image is None:
-    print("Error: input.jpg not found.")
-    exit()
+def display_menu():
+    print("\n===== COMPUTER VISION IMAGE TRANSFORMATION TOOL =====")
+    print("1. Brightness")
+    print("2. Contrast")
+    print("3. Negative")
+    print("4. Gamma Transformation")
+    print("5. Thresholding")
+    print("6. Translation")
+    print("7. Scaling")
+    print("8. Rotation")
+    print("9. Horizontal Reflection")
+    print("10. Vertical Reflection")
+    print("11. X-axis Shearing")
+    print("12. Y-axis Shearing")
+    print("13. Affine Transformation")
 
-# Create output folder
-os.makedirs("output", exist_ok=True)
 
-print("\n===== COMPUTER VISION IMAGE TRANSFORMATION TOOL =====")
-print("1. Brightness")
-print("2. Contrast")
-print("3. Negative")
-print("4. Gamma Transformation")
-print("5. Thresholding")
-print("6. Translation")
-print("7. Scaling")
-print("8. Rotation")
-print("9. Horizontal Reflection")
-print("10. Vertical Reflection")
-print("11. X-axis Shearing")
-print("12. Y-axis Shearing")
-print("13. Affine Transformation")
+def main():
+    try:
+        image = load_image("input.jpg")
 
-choice = int(input("\nEnter your choice: "))
+        display_menu()
 
-if choice == 1:
-    result = cv2.convertScaleAbs(image, alpha=1.0, beta=50)
-    name = "brightness.jpg"
+        choice = int(input("\nEnter your choice: "))
 
-elif choice == 2:
-    result = cv2.convertScaleAbs(image, alpha=1.8, beta=0)
-    name = "contrast.jpg"
+        transformations = {
+            1: (brightness, "brightness.jpg"),
+            2: (contrast, "contrast.jpg"),
+            3: (negative, "negative.jpg"),
+            4: (gamma_transformation, "gamma.jpg"),
+            5: (thresholding, "threshold.jpg"),
+            6: (translation, "translation.jpg"),
+            7: (scaling, "scaling.jpg"),
+            8: (rotation, "rotation.jpg"),
+            9: (horizontal_reflection, "horizontal_reflection.jpg"),
+            10: (vertical_reflection, "vertical_reflection.jpg"),
+            11: (x_shearing, "x_shear.jpg"),
+            12: (y_shearing, "y_shear.jpg"),
+            13: (affine_transformation, "affine.jpg")
+        }
 
-elif choice == 3:
-    result = 255 - image
-    name = "negative.jpg"
+        if choice not in transformations:
+            print("Invalid choice. Please select a number from 1 to 13.")
+            return
 
-elif choice == 4:
-    gamma = 2.0
-    table = np.array(
-        [((i / 255.0) ** gamma) * 255 for i in np.arange(256)]
-    ).astype("uint8")
-    result = cv2.LUT(image, table)
-    name = "gamma.jpg"
+        transformation_function, filename = transformations[choice]
 
-elif choice == 5:
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, result = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-    name = "threshold.jpg"
+        result = transformation_function(image)
 
-elif choice == 6:
-    matrix = np.float32([[1, 0, 100], [0, 1, 50]])
-    result = cv2.warpAffine(image, matrix, (image.shape[1], image.shape[0]))
-    name = "translation.jpg"
+        output_path = save_image(result, filename)
 
-elif choice == 7:
-    result = cv2.resize(image, None, fx=1.5, fy=1.5)
-    name = "scaling.jpg"
+        print("\nTransformation completed successfully!")
+        print(f"Output saved in: {output_path}")
 
-elif choice == 8:
-    height, width = image.shape[:2]
-    center = (width // 2, height // 2)
-    matrix = cv2.getRotationMatrix2D(center, 45, 1.0)
-    result = cv2.warpAffine(image, matrix, (width, height))
-    name = "rotation.jpg"
+    except ValueError:
+        print("Error: Please enter a valid number.")
 
-elif choice == 9:
-    result = cv2.flip(image, 1)
-    name = "horizontal_reflection.jpg"
+    except FileNotFoundError as error:
+        print(f"Error: {error}")
 
-elif choice == 10:
-    result = cv2.flip(image, 0)
-    name = "vertical_reflection.jpg"
+    except Exception as error:
+        print(f"An unexpected error occurred: {error}")
 
-elif choice == 11:
-    height, width = image.shape[:2]
-    matrix = np.float32([[1, 0.4, 0], [0, 1, 0]])
-    result = cv2.warpAffine(image, matrix, (width, height))
-    name = "x_shear.jpg"
 
-elif choice == 12:
-    height, width = image.shape[:2]
-    matrix = np.float32([[1, 0, 0], [0.4, 1, 0]])
-    result = cv2.warpAffine(image, matrix, (width, height))
-    name = "y_shear.jpg"
-
-elif choice == 13:
-    source = np.float32([[50, 50], [200, 50], [50, 200]])
-    destination = np.float32([[10, 100], [200, 50], [100, 250]])
-
-    matrix = cv2.getAffineTransform(source, destination)
-
-    height, width = image.shape[:2]
-    result = cv2.warpAffine(image, matrix, (width, height))
-    name = "affine.jpg"
-
-else:
-    print("Invalid choice.")
-    exit()
-
-cv2.imwrite("output/" + name, result)
-
-print("\nTransformation completed successfully!")
-print("Output saved in: output/" + name)
+if __name__ == "__main__":
+    main()
